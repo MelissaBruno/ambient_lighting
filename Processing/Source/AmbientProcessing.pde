@@ -139,7 +139,7 @@ void draw () {
   weight = 257 - transition;
   j = 6;
 
-  // This section takes 256 pixels from within the block that we are looking at for each LED
+  // VIA ADALIGHT: This section takes 256 pixels from within the block that we are looking at for each LED
   // and creates a single pixel that is the average of those colors.
   for(i=0; i<leds.length; i++) {
     d = leds[i][0];
