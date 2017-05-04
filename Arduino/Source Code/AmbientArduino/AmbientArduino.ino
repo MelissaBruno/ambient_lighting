@@ -51,7 +51,7 @@ void setup()
     indexOut = 0,
     mode = MODE_HEADER,
     hi, lo, chk, i, spiFlag;
-    int16_t
+  int16_t
     bytesBuffered = 0,
     hold = 0,
     c;
