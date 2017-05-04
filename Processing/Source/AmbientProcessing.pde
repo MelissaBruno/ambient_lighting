@@ -55,9 +55,7 @@ void setup() {
   GraphicsEnvironment graphicsE = GraphicsEnvironment.getLocalGraphicsEnvironment();
   GraphicsDevice[] devices = graphicsE.getScreenDevices();
   
-  //Creates a robot obhect that creates a coordinate system over the monitor.
-  try {
-    robot[0] = new Robot(devices[monitor[0][0]]);
+  robot[0] = new Robot(devices[monitor[0][0]]);
   }
   catch(AWTException e) {
     System.out.println("Robot failed");
@@ -78,7 +76,7 @@ void setup() {
 
     range = (float)bounds[leds[i][0]].width / (float)monitor[leds[i][0]][1];
     step  = range / 16.0;
-    start = range * (float)leds[i][1] + step * 0.5;
+    start = range * (float)leds[i][1] + step * 0.5;        //Start at the bottom-left, facing the LEDs
     
     // Columns
     for(col=0; col<16; col++){
