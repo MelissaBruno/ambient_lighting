@@ -26,19 +26,23 @@ static int brightness = 100;
 static int transition = 75;  
 static final int timeout = 5000; // 5 seconds
 
-int              displayIndex, i, totalWidth, maxHeight, row, col, rowOffset;
-int[]            x = new int[16], y = new int[16];
-float            f, range, step, start;
-byte[]           serialData = new byte[6 + leds.length * 3];
-int[][]          ledColor = new int[leds.length][3],
-                 prevColor = new int[leds.length][3];
-byte[][]         gamma = new byte[256][3];
-int              displays = monitor.length;
-Robot[]          robot = new Robot[monitor.length];
-Rectangle[]      dispBounds = new Rectangle[monitor.length],
-                 ledBounds;
-int[][]          pixelOffset = new int[leds.length][256], screenData;
-Serial           port;
+int row, col, rowOffset;
+int totalWidth = 0;
+int maxHeight = 0;
+
+int[] x = new int[16], y = new int[16];
+float f, range, step, start;
+int[][] ledColor = new int[leds.length][3],
+        prevColor = new int[leds.length][3];
+byte[][] gamma = new byte[256][3];
+int displays = monitor.length;
+Robot[] robot = new Robot[monitor.length];
+Rectangle[] bounds = new Rectangle[monitor.length],
+            ledBounds;
+int[][] pixelOffset = new int[leds.length][256], screenData;
+
+byte[] serialData = new byte[6 + leds.length * 3];
+Serial port;
 
 
 void setup() {
@@ -46,40 +50,40 @@ void setup() {
   port = new Serial(this, Serial.list()[1], 115200);      //Open serial port, ***Check before demo***
 
   screenData = new int[monitor.length][];
-  GraphicsEnvironment graphicsE = GraphicsEnvironment.getLocalGraphicsEnvironment();
-  GraphicsDevice[] graphicsD = graphicsE.getScreenDevices();
-  if(displays > graphicsD.length) displays = graphicsD.length;
-  totalWidth = maxHeight = 0;
   
-  for(displayIndex=0; displayIndex< displays; displayIndex++) {
-    try {
-      robot[displayIndex] = new Robot(graphicsD[monitor[displayIndex][0]]);
-    }
-    catch(AWTException e) {
-      System.out.println("Robot failed");
-    }
-    
-    GraphicsConfiguration[] graphicsCon = graphicsD[monitor[displayIndex][0]].getConfigurations();
-    dispBounds[displayIndex]   = graphicsCon[0].getBounds();
-    dispBounds[displayIndex].x = dispBounds[displayIndex].y = 0;
-    totalWidth += monitor[displayIndex][1];
-    if(displayIndex > 0) totalWidth++;
-    if(monitor[displayIndex][2] > maxHeight) maxHeight = monitor[displayIndex][2];
+  // GraphicsEnvironment and GraphicsDevice retrieve the connected monitor.
+  GraphicsEnvironment graphicsE = GraphicsEnvironment.getLocalGraphicsEnvironment();
+  GraphicsDevice[] devices = graphicsE.getScreenDevices();
+  
+  //Creates a robot obhect that creates a coordinate system over the monitor.
+  try {
+    robot[0] = new Robot(devices[monitor[0][0]]);
   }
+  catch(AWTException e) {
+    System.out.println("Robot failed");
+  }
+  
+  //Setting boundaries of monitor
+  GraphicsConfiguration[] graphicsCon = devices[monitor[0][0]].getConfigurations();
+  bounds[0]   = graphicsCon[0].getBounds();
+  bounds[0].x = bounds[0].y = 0;
+  totalWidth += monitor[0][1];
+  if(0 > 0) totalWidth++;
+  if(monitor[0][2] > maxHeight) maxHeight = monitor[0][2];
+
 
 
   // Determines the col and rows that get sampled for each LED
-  for(i=0; i<leds.length; i++) {
-    displayIndex = leds[i][0];
+  for(int i = 0; i < leds.length; i++) {
 
-    range = (float)dispBounds[displayIndex].width / (float)monitor[displayIndex][1];
+    range = (float)bounds[leds[i][0]].width / (float)monitor[leds[i][0]][1];
     step  = range / 16.0;
     start = range * (float)leds[i][1] + step * 0.5;
     
     // Columns
     for(col=0; col<16; col++){
       x[col] = (int)(start + step * (float)col);
-      range = (float)dispBounds[displayIndex].height / (float)monitor[displayIndex][2];
+      range = (float)bounds[leds[i][0]].height / (float)monitor[leds[i][0]][2];
     }
     
     //Rows
@@ -91,17 +95,17 @@ void setup() {
     for(row=0; row<16; row++) {
       for(col=0; col<16; col++) {
         pixelOffset[i][row * 16 + col] =
-          y[row] * dispBounds[displayIndex].width + x[col];
+          y[row] * bounds[leds[i][0]].width + x[col];
       }
     }
   }
 
-  for(i=0; i<prevColor.length; i++) {
+  for(int i = 0; i < prevColor.length; i++) {
     prevColor[i][0] = prevColor[i][1] = prevColor[i][2] =
       brightness / 3;
   }
 
-  for(i=0; i<256; i++) {
+  for(int i = 0; i < 256; i++) {
     f = pow((float)i / 255.0, 2.8);
     gamma[i][0] = (byte)(f * 255.0);
     gamma[i][1] = (byte)(f * 240.0);
@@ -130,16 +134,15 @@ void draw () {
   int d, i, j, o, c, weight, rb, g, sum, deficit, s2;
   int[] pixels, offset;
 
-    // Capture each section in the displays array
-    for(d=0; d<displays; d++) {
-      image = robot[d].createScreenCapture(dispBounds[d]);
-      screenData[d] = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
-    }
+  // Create image from pixels read from the screen within boundaries
+  // Store data from raster (rect array of pixels) in screenData 
+  image = robot[0].createScreenCapture(bounds[0]);
+  screenData[0] = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
     
   weight = 257 - transition;
   j = 6;
 
-  // VIA ADALIGHT: This section takes 256 pixels from within the block that we are looking at for each LED
+  // This section takes 256 pixels from within the block that we are looking at for each LED
   // and creates a single pixel that is the average of those colors.
   for(i=0; i<leds.length; i++) {
     d = leds[i][0];
