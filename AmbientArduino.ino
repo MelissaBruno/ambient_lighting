@@ -1,6 +1,4 @@
 #include "FastLED.h"
-#include "Adafruit_WS2801.h"
-#include "SPI.h" 
  
 #define NUM_LEDS 100 // Max LED count
 
